@@ -1,17 +1,14 @@
 <script lang="ts">
-import {defineComponent} from 'vue'
-
-export default defineComponent({
-  name: "index"
-})
 </script>
-
 <template>
-  <div>
-
-  </div>
+  <header>
+    <nav>
+      <ul>
+        <li><NuxtLink to="/patients">Patients</NuxtLink></li>
+      </ul>
+    </nav>
+  </header>
 </template>
 
-<style scoped>
-
-</style>
+<script setup lang="ts">
+</script>
