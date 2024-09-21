@@ -1,26 +1,37 @@
 import {
-  DataTypes,
-  Model,
-
+    DataTypes,
+    Model, NonAttribute,
 } from '@sequelize/core';
-import sequelize from '../service/db';
+import sequelize from "~/server/api/service/db";
 
 interface PatientAttributes {
     id?: number;
-    first_name: string;
-    last_name: string;
-    // birth_date: Date;
-    phone_number: string;
+    firstName: string;
+    lastName: string;
+    email?: string;
+    birthDate: Date;
+    phoneNumber: string;
     address?: string;
+    fullName: string;
+    fullNameAndAddress: string;
 }
 
 class Patient extends Model<PatientAttributes> implements PatientAttributes {
     public id!: number;
-    public first_name!: string;
-    public last_name!: string;
-    // public birth_date!: Date;
-    public phone_number!: string;
+    public firstName!: string;
+    public lastName!: string;
+    public email!: string;
+    public birthDate!: Date;
+    public phoneNumber!: string;
     public address?: string;
+
+    get fullName(): NonAttribute<string> {
+        return this.firstName + " " + this.lastName;
+    }
+
+    get fullNameAndAddress(): NonAttribute<string> {
+        return this.firstName + " " + this.lastName + this.address;
+    }
 }
 
 Patient.init({
@@ -29,26 +40,52 @@ Patient.init({
         autoIncrement: true,
         primaryKey: true,
     },
-    first_name: {
-        type: new DataTypes.STRING(128),
+    firstName: {
+        type: DataTypes.STRING(128),
         allowNull: false,
     },
-    last_name: {
-        type: new DataTypes.STRING(128),
+    lastName: {
+        type: DataTypes.STRING(128),
         allowNull: false,
     },
-    // birth_date: {
-    //     type: DataTypes.DATE,
-    //     allowNull: false,
-    // },
-    phone_number: {
-        type: new DataTypes.STRING(128),
+    birthDate: {
+        type: DataTypes.DATE,
+        allowNull: false,
+    },
+    email: {
+        type: DataTypes.STRING(128),
+        allowNull: true,
+    },
+    phoneNumber: {
+        type: DataTypes.STRING(128),
         allowNull: true,
     },
     address: {
-        type: new DataTypes.STRING(128),
+        type: DataTypes.STRING(128),
         allowNull: true,
     },
+    fullName: {
+        type: DataTypes.VIRTUAL,
+        get() {
+            // @ts-expect-error
+            return `${this.firstName} ${this.lastName}`;
+        },
+        set(value) {
+            throw new Error('Do not try to set the `fullName` value!');
+        },
+
+    },
+    fullNameAndAddress: {
+        type: DataTypes.VIRTUAL,
+        get() {
+            // @ts-expect-error
+            return `${this.firstName} ${this.lastName} (${this.address})`;
+        },
+        set(value) {
+            throw new Error('Do not try to set the `fullNameAndAddress` value!');
+        },
+
+    }
 }, {
     sequelize,
     tableName: 'patient',
