@@ -1,15 +1,13 @@
-import sequelize from "~/server/api/service/db";
 import Patient from "~/server/api/model/patient";
 
 export default eventHandler(async (e) => {
     try {
         const body = await readBody(e);
-        return await Patient.create({
-            ...body
-        });
-    }
-    catch (error) {
-        sequelize.close();
+        delete body.id;
+        const patient = await Patient.create(JSON.parse(body));
+        return patient.id;
+    } catch (error) {
+        console.log(error)
         return error
     }
 })

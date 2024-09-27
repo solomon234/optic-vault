@@ -56,7 +56,6 @@ const isDark = computed({
     <UContainer>
       <slot/>
     </UContainer>
-    <UNotifications/>
   </div>
 </template>
 

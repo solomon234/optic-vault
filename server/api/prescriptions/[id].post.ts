@@ -5,10 +5,9 @@ export default eventHandler(async (e) => {
     try {
         const body = await readBody(e);
         return await Prescription.create({
-            ...body
+            ...JSON.parse(body), patientId: e?.context?.params?.id,
         });
-    }
-    catch (error) {
+    } catch (error) {
         sequelize.close();
         return error
     }

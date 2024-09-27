@@ -1,6 +1,7 @@
 import sequelize from "~/server/api/service/db";
 import Patient from "~/server/api/model/patient";
 import {Op} from "@sequelize/core";
+import Prescription from "~/server/api/model/prescription";
 
 export default eventHandler(async (e) => {
     try {
@@ -20,12 +21,12 @@ export default eventHandler(async (e) => {
                         }
                     }
                 ]
-            }
+            },
+            include: Prescription
         })
 
     } catch (error) {
         console.error(error);
-        sequelize.close();
         return error
     }
 })

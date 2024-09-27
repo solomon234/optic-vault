@@ -20,14 +20,9 @@ const schema = object({
   email: string().email('Invalid email').defined(),
   phoneNumber: string().matches(/^\(\d{3}\) \d{3}-\d{4}$/, 'Invalid Phone Number Ex. (123) 123-1234').defined(),
   birthDate: string().defined(),
-  // rx: object({
-  odSphere: string().matches(/^[+-]?\d+(\.\d{1,2})?$/, 'Invalid Value'),
-  osSphere: string().matches(/^[+-]?\d+(\.\d{1,2})?$/, 'Invalid Value'),
-  odAxis: number().min(-180).max(180, 'Invalid Axis'),
-  osAxis: string().defined()
-  // })
 })
 let state = reactive({
+  id: 0,
   hasPrism: false,
   firstName: undefined,
   lastName: undefined,
@@ -35,23 +30,23 @@ let state = reactive({
   email: undefined,
   birthDate: undefined,
   address: undefined,
-  // rx: {
-  osSphere: '0.00',
-  osCylinder: '0.00',
+  // rx
+  osSphere: '',
+  osCylinder: '',
   osAxis: undefined,
   osAdd: undefined,
   osPD: undefined,
   osPrism: undefined,
   osBase: undefined,
-  odSphere: '0.00',
-  odCylinder: '0.00',
+  odSphere: '',
+  odCylinder: '',
   odAxis: undefined,
   odAdd: undefined,
   odPD: undefined,
   odPrism: undefined,
   odBase: undefined,
-  rxDate: undefined,
-  // }
+  rxDate: format(new Date(), 'MM/dd/yyy'),
+  comments: ''
 })
 const addValues = computed({
   get() {
@@ -67,10 +62,32 @@ const rxValues = computed({
   set(val) {
   }
 })
+const patientInfo = computed({
+  get() {
+    const tmpObj: any = {...state};
+    return ['firstName', 'lastName', 'email', 'phoneNumber', 'birthDate', 'address', 'id']
+        .map(key => {
+          return {[key]: tmpObj[key]}
+        }).reduce((acc, x) => acc = {...acc, ...x}, {});
+  },
+  set(val) {
+  }
+})
+const rxInfo = computed({
+  get() {
+    const tmpObj: any = {...state};
+    return ['osSphere', 'osCylinder', 'osAxis', 'osAdd', 'osPD', 'osPrism', 'osBase', 'odSphere', 'odCylinder', 'odAxis', 'odAdd', 'odPD', 'odPrism', 'odBase', 'rxDate', 'comments']
+        .map(key => {
+          return {[key]: tmpObj[key]}
+        }).reduce((acc, x) => acc = {...acc, ...x}, {});
+  },
+  set(val) {
+  }
+})
 
 // methods
 function generateAddValues(min: number, max: number, step: number) {
-  const values = [];
+  const values = [''];
   for (let i = min; i <= max; i += step) {
     values.push(i > 0 ? '+' + i.toFixed(2).toString() : i.toFixed(2).toString()); // Ensure the value has two decimal places
   }
@@ -86,9 +103,42 @@ async function search(q: string) {
   return patients
 }
 
+function clearSelected() {
+  console.log('clear')
+  selected.value = undefined
+}
+
 async function onSubmit(event: FormSubmitEvent<Schema>) {
   if (!schema.isValidSync(state)) {
     toast.add({title: 'Errors found'})
+    return
+  }
+  let id = state.id;
+
+  try {
+    if (id > 0) {
+      await fetch(apiUrl + 'api/patients/' + id, {
+        method: 'PUT',
+        body: JSON.stringify(patientInfo.value)
+      })
+    }
+
+    // Post new data
+    if (id == 0) {
+      const response = await fetch(apiUrl + 'api/patients', {
+        method: 'POST',
+        body: JSON.stringify(patientInfo.value)
+      })
+      id = await response.json();
+      console.log('new ID', id);
+    }
+
+    await fetch(apiUrl + 'api/prescriptions/' + id, {
+      method: 'POST',
+      body: JSON.stringify(rxInfo.value)
+    })
+  } catch (error) {
+    console.error(error)
   }
 }
 
@@ -103,7 +153,7 @@ watch(selected, (newSelected) => {
       address: undefined,
       phoneNumber: undefined,
       email: undefined,
-      id: undefined
+      id: 0
     }
     loading.value = false;
     return;
@@ -114,7 +164,7 @@ watch(selected, (newSelected) => {
     birthDate: format(new Date(newSelected.birthDate), 'MM/dd/yyy')
   }
   loading.value = false;
-}, {deep: true});
+}, {deep: false});
 
 </script>
 <template>
@@ -132,7 +182,7 @@ watch(selected, (newSelected) => {
           by="id">
         <template #trailing>
           <UButton
-              @click="selected = undefined"
+              @click="clearSelected"
               color="gray"
               variant="link"
               icon="i-heroicons-x-mark-20-solid"
@@ -253,17 +303,22 @@ watch(selected, (newSelected) => {
           <UInputMenu :options="['UP','DOWN','OUT','IN']" v-model="state.osBase"/>
         </UFormGroup>
       </div>
+      <UFormGroup label="Rx Date" class="w-3/12">
+        <UInput v-model="state.rxDate" v-mask="'##/##/####'" placeholder="MM/DD/YYYY" :loading="loading"/>
+      </UFormGroup>
       <UCheckbox label="HasPrism?" v-model="state.hasPrism"></UCheckbox>
       <UFormGroup label="Comments">
         <UTextarea
             type="string"
         />
       </UFormGroup>
+
       <UButton
           label="Submit"
           @click="onSubmit"/>
     </UForm>
   </UContainer>
+  <UNotifications/>
 </template>
 
 

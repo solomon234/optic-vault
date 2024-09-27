@@ -3,6 +3,7 @@ import {
     Model, NonAttribute,
 } from '@sequelize/core';
 import sequelize from "~/server/api/service/db";
+import Prescription from "~/server/api/model/prescription";
 
 interface PatientAttributes {
     id?: number;
@@ -14,6 +15,7 @@ interface PatientAttributes {
     address?: string;
     fullName: string;
     fullNameAndAddress: string;
+    prescription?: Prescription;
 }
 
 class Patient extends Model<PatientAttributes> implements PatientAttributes {
@@ -24,6 +26,7 @@ class Patient extends Model<PatientAttributes> implements PatientAttributes {
     public birthDate!: Date;
     public phoneNumber!: string;
     public address?: string;
+    public Prescription?: Prescription;
 
     get fullName(): NonAttribute<string> {
         return this.firstName + " " + this.lastName;
@@ -42,15 +45,15 @@ Patient.init({
     },
     firstName: {
         type: DataTypes.STRING(128),
-        allowNull: false,
+        allowNull: true,
     },
     lastName: {
         type: DataTypes.STRING(128),
-        allowNull: false,
+        allowNull: true,
     },
     birthDate: {
         type: DataTypes.DATE,
-        allowNull: false,
+        allowNull: true,
     },
     email: {
         type: DataTypes.STRING(128),
@@ -91,5 +94,7 @@ Patient.init({
     tableName: 'patient',
     timestamps: true,
 });
+
+Patient.hasMany(Prescription)
 
 export default Patient;

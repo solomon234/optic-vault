@@ -24,8 +24,9 @@ const columns = [
     label: "Date of Birth",
   }
 ]
-let patients: Ref<UnwrapRef<any[]>> = ref([]);
 const apiUrl = process.env.URL ? process.env.URL : 'http://localhost:3000/';
+const toast = useToast()
+let patients: Ref<UnwrapRef<any[]>> = ref([]);
 
 const q = ref('');
 
@@ -35,14 +36,14 @@ const fetchPatients = async () => {
     const body: Patient[] | any = await response.json();
     patients.value = [...body];
   } catch (error) {
+    toast.add({title: 'Errors found'})
     console.error('Error fetching patients:', error);
   }
 };
 
 const filteredRows = computed(() => {
   if (!q.value) {
-    fetchPatients()
-    return patients
+    return patients.value
   }
 
   return patients.value.filter((patient) => {
@@ -61,7 +62,13 @@ onMounted(fetchPatients)
     <div class="flex px-3 py-3.5 border-b border-gray-200 dark:border-gray-700">
       <UInput v-model="q" placeholder="Filter patient..."/>
     </div>
-    <UTable :columns="columns" :rows="filteredRows"/>
+    <UTable :columns="columns" :rows="filteredRows">
+      <template #expand="{ row }">
+        <div class="p-4">
+          <pre>{{ row }}</pre>
+        </div>
+      </template>
+    </UTable>
   </div>
 </template>
 
