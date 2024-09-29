@@ -116,7 +116,7 @@ onMounted(fetchPatients)
       >
         <template #header>
           <div class="flex items-center justify-between">
-            <span>Prescription - {{ (prescription.rxDate) }}</span>
+            <span>Prescription - {{ format(new Date(prescription.rxDate), 'MM/dd/yyy') }}</span>
             <UButton class="bg-red-600" @click="deleteRX(prescription, index)">Delete</UButton>
           </div>
         </template>
