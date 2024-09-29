@@ -8,9 +8,7 @@ export default eventHandler(async (e) => {
                 id: e?.context?.params?.id,
             },
         });
-    }
-    catch (error) {
-        sequelize.close();
+    } catch (error) {
         return error
     }
 })

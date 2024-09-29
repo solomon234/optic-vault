@@ -13,7 +13,6 @@ export default eventHandler(async (e) => {
             },
         );
     } catch (error) {
-        sequelize.close();
         return error
     }
 })

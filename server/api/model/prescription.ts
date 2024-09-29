@@ -65,6 +65,14 @@ Prescription.init({
         type: DataTypes.STRING(128),
         allowNull: true,
     },
+    osPD: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+    },
+    osAdd: {
+        type: DataTypes.STRING(128),
+        allowNull: true,
+    },
     odSphere: {
         type: DataTypes.STRING(128),
         allowNull: true,
@@ -85,12 +93,20 @@ Prescription.init({
         type: DataTypes.STRING(128),
         allowNull: true,
     },
+    odPD: {
+        type: DataTypes.INTEGER,
+        allowNull: true,
+    },
+    odAdd: {
+        type: DataTypes.STRING(128),
+        allowNull: true,
+    },
     rxDate: {
         type: DataTypes.DATE,
         allowNull: true,
     },
     comments: {
-        type: DataTypes.STRING(128),
+        type: DataTypes.STRING(256),
         allowNull: true,
     }
 }, {

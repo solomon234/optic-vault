@@ -21,33 +21,6 @@ const schema = object({
   phoneNumber: string().matches(/^\(\d{3}\) \d{3}-\d{4}$/, 'Invalid Phone Number Ex. (123) 123-1234').defined(),
   birthDate: string().defined(),
 })
-let state = reactive({
-  id: 0,
-  hasPrism: false,
-  firstName: undefined,
-  lastName: undefined,
-  phoneNumber: undefined,
-  email: undefined,
-  birthDate: undefined,
-  address: undefined,
-  // rx
-  osSphere: '',
-  osCylinder: '',
-  osAxis: undefined,
-  osAdd: undefined,
-  osPD: undefined,
-  osPrism: undefined,
-  osBase: undefined,
-  odSphere: '',
-  odCylinder: '',
-  odAxis: undefined,
-  odAdd: undefined,
-  odPD: undefined,
-  odPrism: undefined,
-  odBase: undefined,
-  rxDate: format(new Date(), 'MM/dd/yyy'),
-  comments: ''
-})
 const addValues = computed({
   get() {
     return generateAddValues(0.25, 20.00, 0.25)
@@ -64,7 +37,7 @@ const rxValues = computed({
 })
 const patientInfo = computed({
   get() {
-    const tmpObj: any = {...state};
+    const tmpObj: any = {...state.value};
     return ['firstName', 'lastName', 'email', 'phoneNumber', 'birthDate', 'address', 'id']
         .map(key => {
           return {[key]: tmpObj[key]}
@@ -75,7 +48,7 @@ const patientInfo = computed({
 })
 const rxInfo = computed({
   get() {
-    const tmpObj: any = {...state};
+    const tmpObj: any = {...state.value};
     return ['osSphere', 'osCylinder', 'osAxis', 'osAdd', 'osPD', 'osPrism', 'osBase', 'odSphere', 'odCylinder', 'odAxis', 'odAdd', 'odPD', 'odPrism', 'odBase', 'rxDate', 'comments']
         .map(key => {
           return {[key]: tmpObj[key]}
@@ -84,6 +57,35 @@ const rxInfo = computed({
   set(val) {
   }
 })
+const blankPatient = {
+  id: 0,
+  hasPrism: false,
+  firstName: '',
+  lastName: '',
+  phoneNumber: '',
+  email: '',
+  birthDate: '',
+  address: '',
+  // rx
+  osSphere: undefined,
+  osCylinder: undefined,
+  osAxis: undefined,
+  osAdd: undefined,
+  osPD: undefined,
+  osPrism: undefined,
+  osBase: undefined,
+  odSphere: undefined,
+  odCylinder: undefined,
+  odAxis: undefined,
+  odAdd: undefined,
+  odPD: undefined,
+  odPrism: undefined,
+  odBase: undefined,
+  rxDate: format(new Date(), 'MM/dd/yyy'),
+  comments: ''
+}
+let state = ref({...blankPatient})
+
 
 // methods
 function generateAddValues(min: number, max: number, step: number) {
@@ -103,17 +105,32 @@ async function search(q: string) {
   return patients
 }
 
+function searchRX(q: string) {
+  loading.value = true
+  const val = rxValues.value.filter(e => e.includes(q));
+  loading.value = false
+  return val;
+}
+
+function searchAdd(q: string) {
+  loading.value = true
+  const val = addValues.value.filter(e => e.includes(q));
+  loading.value = false
+  return val;
+}
+
 function clearSelected() {
-  console.log('clear')
-  selected.value = undefined
+  console.log('clear');
+  selected.value = undefined;
+  state.value = {...blankPatient};
 }
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
-  if (!schema.isValidSync(state)) {
+  if (!schema.isValidSync(state.value)) {
     toast.add({title: 'Errors found'})
     return
   }
-  let id = state.id;
+  let id = state.value.id;
 
   try {
     if (id > 0) {
@@ -137,6 +154,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
       method: 'POST',
       body: JSON.stringify(rxInfo.value)
     })
+    clearSelected()
   } catch (error) {
     console.error(error)
   }
@@ -144,27 +162,18 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
 watch(selected, (newSelected) => {
   loading.value = true;
+  state.value = {...blankPatient};
   if (!newSelected) {
-    state = {
-      ...state,
-      firstName: undefined,
-      lastName: undefined,
-      birthDate: undefined,
-      address: undefined,
-      phoneNumber: undefined,
-      email: undefined,
-      id: 0
-    }
     loading.value = false;
     return;
   }
-  state = {
-    ...state,
+  state.value = {
+    ...state.value,
     ...newSelected,
     birthDate: format(new Date(newSelected.birthDate), 'MM/dd/yyy')
   }
   loading.value = false;
-}, {deep: false});
+}, {deep: true});
 
 </script>
 <template>
@@ -225,13 +234,17 @@ watch(selected, (newSelected) => {
         <UFormGroup label="Sphere (OD)" class="w-10/12">
           <UInputMenu
               v-model="state.odSphere"
-              :options="rxValues"
+              :search="searchRX"
+              :loading="loading"
+              nullable
           />
         </UFormGroup>
         <UFormGroup label="Cylinder (OD)" class="w-10/12">
           <UInputMenu
               v-model="state.odCylinder"
-              :options="rxValues"
+              :search="searchRX"
+              :loading="loading"
+              nullable
           />
         </UFormGroup>
         <UFormGroup label="Axis (OD)" class="w-10/12">
@@ -239,13 +252,16 @@ watch(selected, (newSelected) => {
               type="number"
               v-model="state.odAxis"
               max="180"
-              v-mask="'###'"
+              :loading="loading"
+              nullable
           />
         </UFormGroup>
         <UFormGroup label="Add (OD)" class="w-10/12">
           <UInputMenu
-              :options="addValues"
+              :search="searchAdd"
               v-model="state.odAdd"
+              :loading="loading"
+              nullable
           />
         </UFormGroup>
         <UFormGroup label="PD (OD)" class="w-10/12">
@@ -253,6 +269,7 @@ watch(selected, (newSelected) => {
               type="number"
               step="0.5"
               v-model="state.odPD"
+              :loading="loading"
           />
         </UFormGroup>
         <UFormGroup label="Prism (OD)" class="w-10/12" v-if="state.hasPrism">
@@ -266,13 +283,17 @@ watch(selected, (newSelected) => {
         <UFormGroup label="Sphere (OS)" class="w-10/12">
           <UInputMenu
               v-model="state.osSphere"
-              :options="rxValues"
+              :search="searchRX"
+              :loading="loading"
+              nullable
           />
         </UFormGroup>
         <UFormGroup label="Cylinder (OS)" class="w-10/12">
           <UInputMenu
               v-model="state.osCylinder"
-              :options="rxValues"
+              :search="searchRX"
+              :loading="loading"
+              nullable
           />
         </UFormGroup>
         <UFormGroup label="Axis (OS)" class="w-10/12">
@@ -280,13 +301,16 @@ watch(selected, (newSelected) => {
               type="number"
               v-model="state.osAxis"
               max="180"
-              v-mask="'###'"
+              :loading="loading"
+              nullable
           />
         </UFormGroup>
         <UFormGroup label="Add (OS)" class="w-10/12">
           <UInputMenu
-              :options="addValues"
+              :search="searchAdd"
               v-model="state.osAdd"
+              :loading="loading"
+              nullable
           />
         </UFormGroup>
         <UFormGroup label="PD (OS)" class="w-10/12">
@@ -294,6 +318,8 @@ watch(selected, (newSelected) => {
               type="number"
               step="0.5"
               v-model="state.osPD"
+              :loading="loading"
+              nullable
           />
         </UFormGroup>
         <UFormGroup label="Prism (OS)" class="w-10/12" v-if="state.hasPrism">
@@ -310,9 +336,9 @@ watch(selected, (newSelected) => {
       <UFormGroup label="Comments">
         <UTextarea
             type="string"
+            v-model="state.comments"
         />
       </UFormGroup>
-
       <UButton
           label="Submit"
           @click="onSubmit"/>
@@ -320,5 +346,3 @@ watch(selected, (newSelected) => {
   </UContainer>
   <UNotifications/>
 </template>
-
-
