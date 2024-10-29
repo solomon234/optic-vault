@@ -57,6 +57,34 @@ const rxInfo = computed({
   set(val) {
   }
 })
+const totalPrice = computed({
+  get() {
+    return state.value.orderDetails.reduce((acc, x) => acc += parseFloat(x.price) * (1 + (parseFloat(x.tax) / 100)), 0);
+  },
+  set(val) {
+  }
+})
+const examDetails = computed({
+  get() {
+    return state.value.orderDetails.filter((e) => e.productType === 'Exam');
+  },
+  set(val) {
+  }
+})
+const frameDetails = computed({
+  get() {
+    return state.value.orderDetails.filter((e) => e.productType === 'Frame');
+  },
+  set(val) {
+  }
+})
+const lensDetails = computed({
+  get() {
+    return state.value.orderDetails.filter((e) => e.productType === 'Lens');
+  },
+  set(val) {
+  }
+})
 const blankPatient = {
   id: 0,
   hasPrism: false,
@@ -82,8 +110,27 @@ const blankPatient = {
   odPrism: undefined,
   odBase: undefined,
   rxDate: format(new Date(), 'MM/dd/yyy'),
-  comments: ''
+  comments: '',
+  orderTmp: {
+    productType: undefined,
+    frame: undefined,
+    lens: undefined,
+    description: undefined,
+    price: undefined,
+    tax: 8.875
+  },
+  orderDetails: []
 }
+const items = [{
+  key: 'rxEntry',
+  label: 'RX Entry',
+  description: 'Enter the patient\'s prescription here.'
+}, {
+  key: 'orderEntry',
+  label: 'Order entry',
+  description: 'Enter the patient\'s order information here.'
+}]
+
 let state = ref({...blankPatient})
 
 
@@ -123,6 +170,15 @@ function clearSelected() {
   console.log('clear');
   selected.value = undefined;
   state.value = {...blankPatient};
+}
+
+function addToOrder() {
+  state.value.orderDetails.push(state.value.orderTmp);
+  state.value.orderTmp = shallowRef(blankPatient.orderTmp);
+}
+
+function clearOrderEntry() {
+  state.value.orderTmp = shallowRef(blankPatient.orderTmp);
 }
 
 async function onSubmit(event: FormSubmitEvent<Schema>) {
@@ -177,7 +233,7 @@ watch(selected, (newSelected) => {
 
 </script>
 <template>
-  <UContainer>
+  <UContainer class="w-full">
     <UForm :state="state" class="space-y-4" @submit="onSubmit" :schema="schema" :loading="loading">
       <!-- Patient Information -->
       <h2> Patient Entry </h2>
@@ -185,7 +241,7 @@ watch(selected, (newSelected) => {
           v-model="selected"
           :search="search"
           :loading="loading"
-          placeholder="Search for a user..."
+          placeholder="Search for a patient..."
           option-attribute="fullNameAndAddress"
           trailing
           by="id">
@@ -229,116 +285,182 @@ watch(selected, (newSelected) => {
         </section>
       </div>
       <UDivider/>
-      <h2>RX Entry</h2>
-      <div class="grid " :class="state.hasPrism ? 'grid-cols-8' : 'grid-cols-5'">
-        <UFormGroup label="Sphere (OD)" class="w-10/12">
-          <UInputMenu
-              v-model="state.odSphere"
-              :search="searchRX"
-              :loading="loading"
-              nullable
-          />
-        </UFormGroup>
-        <UFormGroup label="Cylinder (OD)" class="w-10/12">
-          <UInputMenu
-              v-model="state.odCylinder"
-              :search="searchRX"
-              :loading="loading"
-              nullable
-          />
-        </UFormGroup>
-        <UFormGroup label="Axis (OD)" class="w-10/12">
-          <UInput
-              type="number"
-              v-model="state.odAxis"
-              max="180"
-              :loading="loading"
-              nullable
-          />
-        </UFormGroup>
-        <UFormGroup label="Add (OD)" class="w-10/12">
-          <UInputMenu
-              :search="searchAdd"
-              v-model="state.odAdd"
-              :loading="loading"
-              nullable
-          />
-        </UFormGroup>
-        <UFormGroup label="PD (OD)" class="w-10/12">
-          <UInput
-              type="number"
-              step="0.5"
-              v-model="state.odPD"
-              :loading="loading"
-          />
-        </UFormGroup>
-        <UFormGroup label="Prism (OD)" class="w-10/12" v-if="state.hasPrism">
-          <UInput type="string" v-model="state.odPrism"/>
-        </UFormGroup>
-        <UFormGroup label="Base (OD)" class="w-10/12" v-if="state.hasPrism">
-          <UInputMenu :options="['UP','DOWN','OUT','IN']" v-model="state.odBase"/>
-        </UFormGroup>
-      </div>
-      <div class="grid " :class="state.hasPrism ? 'grid-cols-8' : 'grid-cols-5'">
-        <UFormGroup label="Sphere (OS)" class="w-10/12">
-          <UInputMenu
-              v-model="state.osSphere"
-              :search="searchRX"
-              :loading="loading"
-              nullable
-          />
-        </UFormGroup>
-        <UFormGroup label="Cylinder (OS)" class="w-10/12">
-          <UInputMenu
-              v-model="state.osCylinder"
-              :search="searchRX"
-              :loading="loading"
-              nullable
-          />
-        </UFormGroup>
-        <UFormGroup label="Axis (OS)" class="w-10/12">
-          <UInput
-              type="number"
-              v-model="state.osAxis"
-              max="180"
-              :loading="loading"
-              nullable
-          />
-        </UFormGroup>
-        <UFormGroup label="Add (OS)" class="w-10/12">
-          <UInputMenu
-              :search="searchAdd"
-              v-model="state.osAdd"
-              :loading="loading"
-              nullable
-          />
-        </UFormGroup>
-        <UFormGroup label="PD (OS)" class="w-10/12">
-          <UInput
-              type="number"
-              step="0.5"
-              v-model="state.osPD"
-              :loading="loading"
-              nullable
-          />
-        </UFormGroup>
-        <UFormGroup label="Prism (OS)" class="w-10/12" v-if="state.hasPrism">
-          <UInput type="string" v-model="state.osPrism"/>
-        </UFormGroup>
-        <UFormGroup label="Base (OS)" class="w-10/12" v-if="state.hasPrism">
-          <UInputMenu :options="['UP','DOWN','OUT','IN']" v-model="state.osBase"/>
-        </UFormGroup>
-      </div>
-      <UFormGroup label="Rx Date" class="w-3/12">
-        <UInput v-model="state.rxDate" v-mask="'##/##/####'" placeholder="MM/DD/YYYY" :loading="loading"/>
-      </UFormGroup>
-      <UCheckbox label="HasPrism?" v-model="state.hasPrism"></UCheckbox>
-      <UFormGroup label="Comments">
-        <UTextarea
-            type="string"
-            v-model="state.comments"
-        />
-      </UFormGroup>
+      <UTabs :items="items" class="w-full">
+        <template #item="{item}">
+          <div v-if="item.key === 'rxEntry'">
+            <UFormGroup label="Rx Date" class="w-3/12">
+              <UInput v-model="state.rxDate" v-mask="'##/##/####'" placeholder="MM/DD/YYYY" :loading="loading"/>
+            </UFormGroup>
+            <div class="grid " :class="state.hasPrism ? 'grid-cols-8' : 'grid-cols-5'">
+              <UFormGroup label="Sphere (OD)" class="w-10/12">
+                <UInputMenu
+                    v-model="state.odSphere"
+                    :search="searchRX"
+                    :loading="loading"
+                    nullable
+                />
+              </UFormGroup>
+              <UFormGroup label="Cylinder (OD)" class="w-10/12">
+                <UInputMenu
+                    v-model="state.odCylinder"
+                    :search="searchRX"
+                    :loading="loading"
+                    nullable
+                />
+              </UFormGroup>
+              <UFormGroup label="Axis (OD)" class="w-10/12">
+                <UInput
+                    type="number"
+                    v-model="state.odAxis"
+                    max="180"
+                    :loading="loading"
+                    nullable
+                />
+              </UFormGroup>
+              <UFormGroup label="Add (OD)" class="w-10/12">
+                <UInputMenu
+                    :search="searchAdd"
+                    v-model="state.odAdd"
+                    :loading="loading"
+                    nullable
+                />
+              </UFormGroup>
+              <UFormGroup label="PD (OD)" class="w-10/12">
+                <UInput
+                    type="number"
+                    step="0.5"
+                    v-model="state.odPD"
+                    :loading="loading"
+                />
+              </UFormGroup>
+              <UFormGroup label="Prism (OD)" class="w-10/12" v-if="state.hasPrism">
+                <UInput type="string" v-model="state.odPrism"/>
+              </UFormGroup>
+              <UFormGroup label="Base (OD)" class="w-10/12" v-if="state.hasPrism">
+                <UInputMenu :options="['UP','DOWN','OUT','IN']" v-model="state.odBase"/>
+              </UFormGroup>
+            </div>
+            <div class="grid " :class="state.hasPrism ? 'grid-cols-8' : 'grid-cols-5'">
+              <UFormGroup label="Sphere (OS)" class="w-10/12">
+                <UInputMenu
+                    v-model="state.osSphere"
+                    :search="searchRX"
+                    :loading="loading"
+                    nullable
+                />
+              </UFormGroup>
+              <UFormGroup label="Cylinder (OS)" class="w-10/12 h-5">
+                <UInputMenu
+                    v-model="state.osCylinder"
+                    :search="searchRX"
+                    :loading="loading"
+                    nullable
+                />
+              </UFormGroup>
+              <UFormGroup label="Axis (OS)" class="w-10/12">
+                <UInput
+                    type="number"
+                    v-model="state.osAxis"
+                    max="180"
+                    :loading="loading"
+                    nullable
+                />
+              </UFormGroup>
+              <UFormGroup label="Add (OS)" class="w-10/12">
+                <UInputMenu
+                    :search="searchAdd"
+                    v-model="state.osAdd"
+                    :loading="loading"
+                    nullable
+                />
+              </UFormGroup>
+              <UFormGroup label="PD (OS)" class="w-10/12">
+                <UInput
+                    type="number"
+                    step="0.5"
+                    v-model="state.osPD"
+                    :loading="loading"
+                    nullable
+                />
+              </UFormGroup>
+              <UFormGroup label="Prism (OS)" class="w-10/12" v-if="state.hasPrism">
+                <UInput type="string" v-model="state.osPrism"/>
+              </UFormGroup>
+              <UFormGroup label="Base (OS)" class="w-10/12" v-if="state.hasPrism">
+                <UInputMenu :options="['UP','DOWN','OUT','IN']" v-model="state.osBase"/>
+              </UFormGroup>
+            </div>
+            <UCheckbox label="HasPrism?" v-model="state.hasPrism"></UCheckbox>
+            <UFormGroup label="Comments">
+              <UTextarea
+                  type="string"
+                  v-model="state.comments"
+              />
+            </UFormGroup>
+
+          </div>
+
+          <div v-if="item.key === 'orderEntry'">
+            <div class=" grid grid-cols-4">
+              <UFormGroup label="Type" class="w-10/12">
+                <UInputMenu v-model="state.orderTmp.productType" :options="['Exam', 'Lens', 'Frame']"
+                            :loading="loading"/>
+              </UFormGroup>
+              <div v-if="state.orderTmp.productType === 'Frame'">
+                <UFormGroup label="Frame" class="w-10/12">
+                  <UInput v-model="state.orderTmp.frame" :loading="loading"/>
+                </UFormGroup>
+              </div>
+              <div v-if="state.orderTmp.productType === 'Lens'">
+                <UFormGroup label="Lens Type" class="w-10/12">
+                  <UInputMenu v-model="state.orderTmp.lens" :loading="loading"
+                              :options="['Single Vision', 'Bifocal', 'Progressive']"/>
+                </UFormGroup>
+              </div>
+              <UFormGroup label="Description" class="w-10/12">
+                <UInput v-model="state.orderTmp.description" :loading="loading"/>
+              </UFormGroup>
+              <UFormGroup label="Price" class="w-10/12">
+                <UInput v-model="state.orderTmp.price" :loading="loading"/>
+              </UFormGroup>
+              <UFormGroup label="Tax" class="w-10/12">
+                <UInput v-model="state.orderTmp.tax" :loading="loading"/>
+              </UFormGroup>
+            </div>
+            <UFormGroup class="w-10/12">
+              <UButton class="m-3"
+                       @click="addToOrder">
+                Add to order
+              </UButton>
+              <UButton class="m-3" @click="clearOrderEntry" color="red">
+                Clear
+              </UButton>
+            </UFormGroup>
+            <UFormGroup label="Order Summary">
+              <div v-if="state.orderDetails.length">
+                <span v-if="examDetails.length"> Exam Summary</span>
+                <div v-for="(exam, index) in examDetails">
+                  {{ exam.description }} - ${{ exam.price }} (Tax: ${{ exam.tax }})
+                </div>
+                <span v-if="frameDetails.length"> Frames: </span>
+                <div v-for="(frame, index) in frameDetails">
+                  {{ frame.description }} - ${{ frame.price }} (Tax: ${{ frame.tax }})
+                </div>
+                <span v-if="lensDetails.length"> Lens: </span>
+                <div v-for="(lens, index) in lensDetails">
+                  {{ lens.type }} {{ lens.description }} - ${{ lens.price }} (Tax: ${{ lens.tax }})
+                  <UButton color="red">
+                    Remove
+                  </UButton>
+                </div>
+
+                <p>Total: ${{ totalPrice }}</p>
+              </div>
+            </UFormGroup>
+          </div>
+        </template>
+      </UTabs>
+
       <UButton
           label="Submit"
           @click="onSubmit"/>

@@ -22,9 +22,23 @@ const isDark = computed({
 })
 </script>
 <template>
-  <div class="default">
+  <div class="default inset-0 flex overflow-hidden">
+    <ClientOnly>
+      <UButton
+          :icon="isDark ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'"
+          color="gray"
+          class="theme"
+          variant="ghost"
+          aria-label="Theme"
+          @click="isDark = !isDark"
+      />
+      <template #fallback>
+        <div class="w-8 h-8"/>
+      </template>
+    </ClientOnly>
     <UVerticalNavigation
         :links="links"
+        class="flex flex-col w-full flex-none w-20 relative overflow-hidden"
         :ui="{
       wrapper: 'border-s border-gray-200 dark:border-gray-800 space-y-2',
       base: 'group block border-s -ms-px leading-6 before:hidden',
@@ -40,20 +54,8 @@ const isDark = computed({
         <span class="group-hover:text-primary relative">{{ link.label }}</span>
       </template>
     </UVerticalNavigation>
-    <ClientOnly>
-      <UButton
-          :icon="isDark ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'"
-          color="gray"
-          class="theme"
-          variant="ghost"
-          aria-label="Theme"
-          @click="isDark = !isDark"
-      />
-      <template #fallback>
-        <div class="w-8 h-8"/>
-      </template>
-    </ClientOnly>
-    <UContainer>
+
+    <UContainer class="flex flex-1 w-full min-w-0">
       <slot/>
     </UContainer>
   </div>

@@ -85,7 +85,7 @@ onMounted(fetchPatients)
 </script>
 
 <template>
-  <div>
+  <div class="w-full">
     <h1>Patients List</h1>
     <div class="flex px-3 py-3.5 border-b border-gray-200 dark:border-gray-700">
       <UInput v-model="q" placeholder="Filter patient..."/>
