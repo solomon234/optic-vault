@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import {format} from "date-fns";
-import {object, string, number, type InferType, date} from 'yup'
-import type {FormSubmitEvent} from '#ui/types'
+import {object, string, type InferType} from 'yup'
+import {useSetting} from "~/composables/useSetting";
 
 const apiUrl = process.env.URL ? process.env.URL : 'http://localhost:3000/';
 
@@ -25,14 +25,14 @@ const addValues = computed({
   get() {
     return generateAddValues(0.25, 20.00, 0.25)
   },
-  set(val) {
+  set() {
   }
 })
 const rxValues = computed({
   get() {
     return generateAddValues(-20.00, 20.00, 0.25)
   },
-  set(val) {
+  set() {
   }
 })
 const patientInfo = computed({
@@ -43,7 +43,7 @@ const patientInfo = computed({
           return {[key]: tmpObj[key]}
         }).reduce((acc, x) => acc = {...acc, ...x}, {});
   },
-  set(val) {
+  set() {
   }
 })
 const rxInfo = computed({
@@ -54,38 +54,38 @@ const rxInfo = computed({
           return {[key]: tmpObj[key]}
         }).reduce((acc, x) => acc = {...acc, ...x}, {});
   },
-  set(val) {
+  set() {
   }
 })
 const totalPrice = computed({
   get() {
-    return state.value.orderDetails.reduce((acc, x) => acc += parseFloat(x.price) * (1 + (parseFloat(x.tax) / 100)), 0);
+    return state.value.orders.reduce((acc, x) => acc += x.price * (1 + (x.tax / 100)), 0);
   },
-  set(val) {
+  set() {
   }
 })
 const examDetails = computed({
   get() {
-    return state.value.orderDetails.filter((e) => e.productType === 'Exam');
+    return state.value.orders.filter((e) => e.productType === 'Exam');
   },
-  set(val) {
+  set() {
   }
 })
 const frameDetails = computed({
   get() {
-    return state.value.orderDetails.filter((e) => e.productType === 'Frame');
+    return state.value.orders.filter((e) => e.productType === 'Frame');
   },
-  set(val) {
+  set() {
   }
 })
 const lensDetails = computed({
   get() {
-    return state.value.orderDetails.filter((e) => e.productType === 'Lens');
+    return state.value.orders.filter((e) => e.productType === 'Lens');
   },
-  set(val) {
+  set() {
   }
 })
-const blankPatient = {
+const blankPatient: Patient = {
   id: 0,
   hasPrism: false,
   firstName: '',
@@ -94,32 +94,25 @@ const blankPatient = {
   email: '',
   birthDate: '',
   address: '',
-  // rx
-  osSphere: undefined,
-  osCylinder: undefined,
-  osAxis: undefined,
-  osAdd: undefined,
-  osPD: undefined,
-  osPrism: undefined,
-  osBase: undefined,
-  odSphere: undefined,
-  odCylinder: undefined,
-  odAxis: undefined,
-  odAdd: undefined,
-  odPD: undefined,
-  odPrism: undefined,
-  odBase: undefined,
-  rxDate: format(new Date(), 'MM/dd/yyy'),
-  comments: '',
-  orderTmp: {
-    productType: undefined,
-    frame: undefined,
-    lens: undefined,
-    description: undefined,
-    price: undefined,
-    tax: 8.875
+  rx: {
+    osSphere: undefined,
+    osCylinder: undefined,
+    osAxis: undefined,
+    osAdd: undefined,
+    osPD: undefined,
+    osPrism: undefined,
+    osBase: undefined,
+    odSphere: undefined,
+    odCylinder: undefined,
+    odAxis: undefined,
+    odAdd: undefined,
+    odPD: undefined,
+    odPrism: undefined,
+    odBase: undefined,
+    rxDate: format(new Date(), 'MM/dd/yyy'),
+    comments: ''
   },
-  orderDetails: []
+  orders: [],
 }
 const items = [{
   key: 'rxEntry',
@@ -131,7 +124,7 @@ const items = [{
   description: 'Enter the patient\'s order information here.'
 }]
 
-let state = ref({...blankPatient})
+let state = ref({...blankPatient, orderTmp: {} as Order, tax: 0.0 as number})
 
 
 // methods
@@ -173,15 +166,25 @@ function clearSelected() {
 }
 
 function addToOrder() {
-  state.value.orderDetails.push(state.value.orderTmp);
-  state.value.orderTmp = shallowRef(blankPatient.orderTmp);
+  state.value.orders.push({...state.value.orderTmp, tax: state.value.tax || 0.0});
+  clearOrderEntry();
 }
 
-function clearOrderEntry() {
-  state.value.orderTmp = shallowRef(blankPatient.orderTmp);
+async function clearOrderEntry() {
+  state.value.orderTmp = {};
+  state.value.tax = await useSetting().getTax() as number;
 }
 
-async function onSubmit(event: FormSubmitEvent<Schema>) {
+async function useLastRX() {
+  const lastRX = selected.value.prescriptions[selected.value.prescriptions.length - 1];
+  state.value = {
+    ...state.value,
+    ...lastRX,
+    rxDate: format(new Date(lastRX.rxDate), 'MM/dd/yyy')
+  }
+}
+
+async function onSubmit() {
   if (!schema.isValidSync(state.value)) {
     toast.add({title: 'Errors found'})
     return
@@ -218,7 +221,7 @@ async function onSubmit(event: FormSubmitEvent<Schema>) {
 
 watch(selected, (newSelected) => {
   loading.value = true;
-  state.value = {...blankPatient};
+  state.value = {...blankPatient, orderTmp: {} as Order, tax: 0.0};
   if (!newSelected) {
     loading.value = false;
     return;
@@ -230,6 +233,10 @@ watch(selected, (newSelected) => {
   }
   loading.value = false;
 }, {deep: true});
+
+onMounted(async () => {
+  state.value.tax = await useSetting().getTax() as number;
+})
 
 </script>
 <template>
@@ -288,8 +295,9 @@ watch(selected, (newSelected) => {
       <UTabs :items="items" class="w-full">
         <template #item="{item}">
           <div v-if="item.key === 'rxEntry'">
+            <UButton label="Use Last RX" @click="useLastRX"/>
             <UFormGroup label="Rx Date" class="w-3/12">
-              <UInput v-model="state.rxDate" v-mask="'##/##/####'" placeholder="MM/DD/YYYY" :loading="loading"/>
+              <UInput v-model="state.rx.rxDate" v-mask="'##/##/####'" placeholder="MM/DD/YYYY" :loading="loading"/>
             </UFormGroup>
             <div class="grid " :class="state.hasPrism ? 'grid-cols-8' : 'grid-cols-5'">
               <UFormGroup label="Sphere (OD)" class="w-10/12">
@@ -394,12 +402,11 @@ watch(selected, (newSelected) => {
             <UFormGroup label="Comments">
               <UTextarea
                   type="string"
-                  v-model="state.comments"
+                  v-model="state.rx.comments"
               />
             </UFormGroup>
 
           </div>
-
           <div v-if="item.key === 'orderEntry'">
             <div class=" grid grid-cols-4">
               <UFormGroup label="Type" class="w-10/12">
@@ -424,7 +431,7 @@ watch(selected, (newSelected) => {
                 <UInput v-model="state.orderTmp.price" :loading="loading"/>
               </UFormGroup>
               <UFormGroup label="Tax" class="w-10/12">
-                <UInput v-model="state.orderTmp.tax" :loading="loading"/>
+                <UInput v-model="state.tax" :loading="loading"/>
               </UFormGroup>
             </div>
             <UFormGroup class="w-10/12">
@@ -437,15 +444,17 @@ watch(selected, (newSelected) => {
               </UButton>
             </UFormGroup>
             <UFormGroup label="Order Summary">
-              <div v-if="state.orderDetails.length">
+              <div v-if="state.orders.length">
                 <span v-if="examDetails.length"> Exam Summary</span>
                 <div v-for="(exam, index) in examDetails">
                   {{ exam.description }} - ${{ exam.price }} (Tax: ${{ exam.tax }})
                 </div>
+                <UDivider/>
                 <span v-if="frameDetails.length"> Frames: </span>
                 <div v-for="(frame, index) in frameDetails">
                   {{ frame.description }} - ${{ frame.price }} (Tax: ${{ frame.tax }})
                 </div>
+                <UDivider/>
                 <span v-if="lensDetails.length"> Lens: </span>
                 <div v-for="(lens, index) in lensDetails">
                   {{ lens.type }} {{ lens.description }} - ${{ lens.price }} (Tax: ${{ lens.tax }})
@@ -453,8 +462,7 @@ watch(selected, (newSelected) => {
                     Remove
                   </UButton>
                 </div>
-
-                <p>Total: ${{ totalPrice }}</p>
+                <p>Total: ${{ totalPrice.toFixed(2) }}</p>
               </div>
             </UFormGroup>
           </div>
