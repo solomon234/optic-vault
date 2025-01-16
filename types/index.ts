@@ -1,21 +1,19 @@
-import type {decimal} from "vscode-languageserver-types";
-
 declare global {
-    export class Patient {
-        id: 0;
-        hasPrism: false;
+    export interface Patient {
+        id: number;
+        hasPrism: boolean;
         firstName: string;
         lastName: string;
         email: string;
         phoneNumber: string;
         address: string;
-        birthDate: Date | string;
+        birthDate: string;
         rx: RX;
         orders: Order[];
     }
 
-    interface RX {
-        osSphere: string | undefined
+    export interface RX {
+        osSphere: string | undefined;
         osCylinder: string | undefined;
         osAxis: number | undefined;
         osPrism: number | undefined;
@@ -29,19 +27,21 @@ declare global {
         odBase: string | undefined;
         odAdd: string | undefined;
         odPD: number | undefined;
-        rxDate: Date | string;
+        rxDate: string;
         comments: string;
     }
 
-    interface Order {
+    export interface Order {
         productType: string;
         frame: string;
         lens: string;
         coating: string;
         tint: string;
         price: number;
-        orderDate: Date | string;
+        orderDate: string;
         description: string;
-        tax: decimal;
+        tax: number;
     }
 }
+
+export {};

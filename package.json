@@ -19,6 +19,7 @@
     "vee-validate": "^4.13.2",
     "vue": "latest",
     "vue-the-mask": "^0.11.1",
+    "vue3-promise-dialog": "^0.3.4",
     "yup": "^1.4.0"
   },
   "devDependencies": {

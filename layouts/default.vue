@@ -3,7 +3,9 @@ const links = [
   [{
     label: 'Home',
     icon: 'i-heroicons-home',
-    to: '/'
+    to: '/',
+    
+
   }, {
     label: 'Patients',
     icon: 'i-heroicons-user-plus',
@@ -28,7 +30,7 @@ const isDark = computed({
 })
 </script>
 <template>
-  <div class="default inset-0 flex overflow-hidden">
+  <div class="default inset-0 flex overflow-hidden" id="container">
     <ClientOnly>
       <UButton
           :icon="isDark ? 'i-heroicons-moon-20-solid' : 'i-heroicons-sun-20-solid'"
@@ -63,4 +65,6 @@ const isDark = computed({
   right: 0;
   top: 0;
 }
+
+
 </style>

@@ -5,7 +5,7 @@ export default eventHandler(async (e) => {
         const body = await readBody(e);
         const setting = await Setting.findOne({where: {type: e?.context?.params?.type}});
         if (setting) {
-            await setting.update({value: body.value});
+            await setting.update({value: body.value.toString()});
         } else {
             await Setting.create({type: e?.context?.params?.type, value: body.value.toString()});
         }

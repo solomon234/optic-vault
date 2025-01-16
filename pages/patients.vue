@@ -3,6 +3,7 @@
 import type Patient from "~/server/api/model/patient";
 import type {UnwrapRef} from "vue";
 import {format} from "date-fns";
+import {usePatient} from "~/composables/usePatient";
 
 const isOpen = ref(false)
 let selected = ref({});
@@ -38,23 +39,20 @@ const items = (row: any) => [
     label: 'Delete',
     icon: 'i-heroicons-trash-20-solid',
     click: async () => {
-      await fetch(apiUrl + 'api/patients/' + row.id, {
-        method: 'DELETE',
-      })
-      fetchPatients()
+      await usePatient().deletePatient(row.id)
+      getPatients()
     }
   }]
 ]
 
-const apiUrl = process.env.URL ? process.env.URL : 'http://localhost:3000/';
 const toast = useToast()
-let patients: Ref<UnwrapRef<any[]>> = ref([]);
+let patients: Ref<UnwrapRef<Patient[]>> = ref([]);
 
 const q = ref('');
 
-const fetchPatients = async () => {
+const getPatients = async () => {
   try {
-    const response = await fetch(apiUrl + 'api/patients'); // Ensure this endpoint matches your API
+    const response = await usePatient().getPatients();
     const body: Patient[] | any = await response.json();
     patients.value = [...body];
   } catch (error) {
@@ -63,9 +61,7 @@ const fetchPatients = async () => {
   }
 };
 const deleteRX = async (rx: object, index: int) => {
-  await fetch(apiUrl + 'api/prescriptions/' + rx.id, {
-    method: 'DELETE',
-  })
+  await usePatient().deleteRX(rx.id)
   selected.prescriptions.splice(index, 1)
 }
 
@@ -81,7 +77,7 @@ const filteredRows = computed(() => {
   })
 })
 
-onMounted(fetchPatients)
+onMounted(getPatients)
 </script>
 
 <template>
