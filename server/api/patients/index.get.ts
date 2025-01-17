@@ -24,7 +24,7 @@ export default eventHandler(async (e) => {
             include: Prescription
         })
         patients.forEach(patient => {
-            patient.prescriptions.sort(function (a, b) {
+            patient.prescriptions?.sort(function (a, b) {
                 const dateA = new Date(a.rxDate), dateB = new Date(b.rxDate)
                 return dateB - dateA
             });

@@ -23,7 +23,7 @@ const columns = [
     label: "Phone Number",
   }, {
     key: "birthDate",
-    label: "Date of Birth",
+    label: "Date of Birth"
   },
   {key: "actions"}
 ]
@@ -53,7 +53,7 @@ const q = ref('');
 const getPatients = async () => {
   try {
     const response = await usePatient().getPatients();
-    const body: Patient[] | any = await response.json();
+    const body: Patient[] | any = response;
     patients.value = [...body];
   } catch (error) {
     toast.add({title: 'Errors found'})

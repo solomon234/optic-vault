@@ -26,7 +26,7 @@ class Patient extends Model<PatientAttributes> implements PatientAttributes {
     public birthDate!: Date;
     public phoneNumber!: string;
     public address?: string;
-    public Prescription?: Prescription;
+    public prescriptions?: Prescription[];
 
     get fullName(): NonAttribute<string> {
         return this.firstName + " " + this.lastName;

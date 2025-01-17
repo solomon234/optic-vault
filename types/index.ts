@@ -9,10 +9,11 @@ declare global {
         address: string;
         birthDate: string;
         rx: RX;
-        orders: Order[];
+        orders: OrderDetail[];
     }
 
     export interface RX {
+        id: number;
         osSphere: string | undefined;
         osCylinder: string | undefined;
         osAxis: number | undefined;
@@ -31,16 +32,24 @@ declare global {
         comments: string;
     }
 
-    export interface Order {
+    export interface OrderDetail {
+        id: number;
+        orderId: number;
         productType: string;
         frame: string;
         lens: string;
-        coating: string;
-        tint: string;
         price: number;
-        orderDate: string;
         description: string;
         tax: number;
+    }
+
+    export interface OrderSummary {
+        id: number;
+        patientId: number;
+        prescriptionId: number;
+        total: number;
+        comments: string;
+        createdDate: string;
     }
 }
 
