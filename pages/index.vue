@@ -512,7 +512,7 @@ onMounted(async () => {
           <UFormGroup class="w-12/12">
             <div class="flex items-center space-x-2">
               <span class="text-right">Description:</span>
-              <UTextarea v-model="state.orderTmp.description" :loading="loading" size="2xs" rows="1" autoresize/>
+              <UTextarea v-model="state.orderTmp.description" :loading="loading" size="2xs" rows=1 autoresize/>
             </div>
           </UFormGroup>
           <UFormGroup class="w-11/12">
@@ -524,12 +524,12 @@ onMounted(async () => {
           <UFormGroup class="w-11/12">
             <div class="flex items-center space-x-2">
               <span class="w-24 text-right">Tax:</span>
-              <UInput v-model="state.tax" :loading="loading" size="2xs" class="flex-1"/>
+              <UInput v-model="state.tax" :loading="loading" size="2xs" class="flex-1" type="number"/>
             </div>
           </UFormGroup>
         </div>
-        <UFormGroup class="w-10/12">
-          <UButton class="m-3"
+        <UFormGroup class="flex justify-end">
+          <UButton class="m-3 right-0"
                    @click="addToOrder">
             Add to order
           </UButton>
