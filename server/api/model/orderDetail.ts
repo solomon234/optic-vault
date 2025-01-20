@@ -1,5 +1,5 @@
 import {
-    DataTypes,
+    DataTypes, ForeignKey,
     Model,
 } from '@sequelize/core';
 import sequelize from "~/server/api/service/db";
@@ -18,7 +18,7 @@ export interface OrderDetailAttribute {
 
 class OrderDetail extends Model<OrderDetailAttribute> implements OrderDetailAttribute {
     public id!: number;
-    public orderId!: number;
+    public orderId!: ForeignKey<OrderSummary['id']>;
     public productType!: string;
     public frame!: string;
     public lens!: string;
@@ -37,6 +37,10 @@ OrderDetail.init(
         orderId: {
             type: DataTypes.INTEGER,
             allowNull: false,
+            references: {
+                model: OrderSummary,
+                key: 'id',
+            },
         },
         productType: {
             type: DataTypes.STRING(128),
@@ -69,6 +73,10 @@ OrderDetail.init(
         timestamps: true,
     }
 )
-OrderSummary.hasMany(OrderDetail)
+OrderSummary.hasMany(OrderDetail, {
+    foreignKey: 'orderId',
+    as: 'orderDetails',
+    hooks: true,
+})
 
 export default OrderDetail;

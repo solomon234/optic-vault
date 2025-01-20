@@ -8,7 +8,7 @@ export default eventHandler(async (e) => {
             {...body},
             {
                 where: {
-                    id: e?.context?.params?.id,
+                    id: body.id,
                 },
             },
         );

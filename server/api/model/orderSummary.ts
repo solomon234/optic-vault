@@ -1,24 +1,25 @@
 import {
-    DataTypes,
+    DataTypes, ForeignKey,
     Model,
 } from '@sequelize/core';
 import sequelize from "~/server/api/service/db";
 import Patient from "~/server/api/model/patient";
+import OrderDetail from "~/server/api/model/orderDetail";
+import Prescription from "~/server/api/model/prescription";
 
 export interface OrderSummaryAttribute {
     id: number;
     patientId: number;
     prescriptionId: number;
     total: number;
-    comments?: string;
 }
 
 class OrderSummary extends Model<OrderSummaryAttribute> implements OrderSummaryAttribute {
     public id!: number;
-    public patientId!: number;
-    public prescriptionId!: number;
+    public patientId!: ForeignKey<Patient['id']>;
+    public prescriptionId!: ForeignKey<Prescription['id']>;
     public total!: number;
-    public comments!: string;
+    public orderDetails?: OrderDetail[];
 }
 
 OrderSummary.init(
@@ -40,10 +41,6 @@ OrderSummary.init(
             type: DataTypes.DOUBLE,
             allowNull: false,
         },
-        comments: {
-            type: DataTypes.STRING(255),
-            allowNull: true,
-        },
     },
     {
         sequelize,
@@ -51,7 +48,5 @@ OrderSummary.init(
         timestamps: true,
     }
 )
-
-Patient.hasMany(OrderSummary)
 
 export default OrderSummary;

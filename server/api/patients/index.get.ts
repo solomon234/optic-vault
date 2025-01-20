@@ -1,6 +1,8 @@
 import Patient from "~/server/api/model/patient";
 import {Op} from "@sequelize/core";
 import Prescription from "~/server/api/model/prescription";
+import OrderSummary from "~/server/api/model/orderSummary";
+import OrderDetail from "~/server/api/model/orderDetail";
 
 export default eventHandler(async (e) => {
     try {
@@ -21,7 +23,7 @@ export default eventHandler(async (e) => {
                     }
                 ]
             },
-            include: Prescription
+            include: [Prescription, OrderSummary]
         })
         patients.forEach(patient => {
             patient.prescriptions?.sort(function (a, b) {

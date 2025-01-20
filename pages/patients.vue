@@ -5,7 +5,9 @@ import type {UnwrapRef} from "vue";
 import {format} from "date-fns";
 import {usePatient} from "~/composables/usePatient";
 
-const isOpen = ref(false)
+const isOpenRX = ref(false)
+const isOpenOrders = ref(false)
+
 let selected = ref({});
 
 const columns = [
@@ -33,7 +35,14 @@ const items = (row: any) => [
     icon: 'i-heroicons-list-bullet-20-solid',
     click: () => {
       selected = row;
-      isOpen.value = true
+      isOpenRX.value = true
+    }
+  }, {
+    label: 'View Order History',
+    icon: 'i-heroicons-list-bullet-20-solid',
+    click: async () => {
+      selected = row.orderSummaries;
+      isOpenOrders.value = true;
     }
   }, {
     label: 'Delete',
@@ -61,8 +70,12 @@ const getPatients = async () => {
   }
 };
 const deleteRX = async (rx: object, index: int) => {
-  await usePatient().deleteRX(rx.id)
-  selected.prescriptions.splice(index, 1)
+  await usePatient().deleteRX(rx.id.toString())
+  selected.value.prescriptions.splice(index, 1)
+}
+
+function removeOrderItem(index: number) {
+  selected.value.orders.splice(index, 1)
 }
 
 const filteredRows = computed(() => {
@@ -93,7 +106,7 @@ onMounted(getPatients)
         </UDropdown>
       </template>
     </UTable>
-    <UModal v-model="isOpen" fullscreen>
+    <UModal v-model="isOpenRX" fullscreen>
       <UCard :ui="{ ring: '', divide: 'divide-y divide-gray-100 dark:divide-gray-800' }">
         <template #header>
           <div class="flex items-center justify-between">
@@ -101,7 +114,7 @@ onMounted(getPatients)
               RX History
             </h3>
             <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark-20-solid" class="-my-1"
-                     @click="isOpen = false"/>
+                     @click="isOpenRX = false"/>
           </div>
         </template>
       </UCard>
@@ -167,6 +180,22 @@ onMounted(getPatients)
       </UCard>
       <span v-if="selected.prescriptions.length === 0" class="text-center">No Data</span>
     </UModal>
+    <UModal v-model="isOpenOrders" fullscreen>
+      <UCard :ui="{ ring: '', divide: 'divide-y divide-gray-100 dark:divide-gray-800' }">
+        <template #header>
+          <div class="flex items-center justify-between">
+            <h3 class="text-base font-semibold leading-6 text-gray-900 dark:text-white">
+              Order History
+            </h3>
+            <UButton color="gray" variant="ghost" icon="i-heroicons-x-mark-20-solid" class="-my-1"
+                     @click="isOpenOrders = false"/>
+          </div>
+        </template>
+      </UCard>
+      <OrderSummary v-for="(order, index) in selected" :orderDetails="order"/>
+
+    </UModal>
+
   </div>
 </template>
 <style scoped>

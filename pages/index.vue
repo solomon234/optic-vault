@@ -4,6 +4,7 @@ import {object, string, type InferType} from 'yup'
 import {useSetting} from "~/composables/useSetting";
 import {usePatient} from "~/composables/usePatient";
 import {useUtils} from "~/composables/useUtils";
+import {useEq} from "#imports";
 
 const {generateAddValues} = useUtils();
 definePageMeta({
@@ -11,7 +12,6 @@ definePageMeta({
 })
 
 const toast = useToast();
-type Schema = InferType<typeof schema>;
 const loading = ref(false);
 const selected = ref();
 const tax = ref();
@@ -72,13 +72,6 @@ const totalPrice = computed({
 const orderDetails = computed({
   get() {
     return state.value.orders;
-  },
-  set() {
-  }
-})
-const formattedDate = computed({
-  get() {
-    return format(new Date(state.value.rx.rxDate), 'MM/dd/yyy')
   },
   set() {
   }
@@ -167,8 +160,8 @@ function addToOrder() {
   clearOrderEntry();
 }
 
-function handleDateInput(e: any) {
-  state.value.rx.rxDate = e.target.value;
+function removeOrderItem(index: number) {
+  state.value.orders.splice(index, 1)
 }
 
 async function clearOrderEntry() {
@@ -181,7 +174,7 @@ async function useLastRX() {
   const lastRX = selected.value.prescriptions[0];
   state.value.rx = {
     ...lastRX,
-    rxDate: format(new Date(lastRX.rxDate), 'MM/dd/yyy')
+    rxDate: format(new Date(lastRX.rxDate), 'yyy-MM-dd')
   }
   state.value.hasPrism = lastRX.odPrism || lastRX.osPrism;
   loading.value = false;
@@ -193,12 +186,15 @@ function validateSubmission() {
     return false
   }
 
+  if (state.value.orders.length > 0) {
+    return true
+  }
+
   if (state.value.orders.length === 0 && confirm('Are you sure you want to continue without order details?')) {
     return true
   } else {
     return false;
   }
-
 }
 
 async function onSubmit() {
@@ -208,6 +204,18 @@ async function onSubmit() {
 
   let id = state.value.id;
   let rxId = rxInfo.value.id;
+  const originalRx = useOmit(selected.value.prescriptions[0], 'comments');
+  const currentRx = useOmit(rxInfo.value, 'comments');
+  originalRx.rxDate = format(new Date(originalRx.rxDate), 'yyy-MM-dd');
+  // Check if RX
+  if (!isEqual(originalRx, currentRx)) {
+    useToast().add({title: 'RX has changed, updating RX'})
+    rxId = 0;
+    state.value.rx.id = 0;
+    delete state.value.rx.createdAt;
+    delete state.value.rx.updatedAt;
+  }
+
   try {
     // Update existing data
     if (id > 0) {
@@ -219,21 +227,24 @@ async function onSubmit() {
       id = response;
       console.log('new ID', id);
     }
-    // Post RX data
-    if (rxInfo.id)
-      await usePatient().updateRX(rxInfo.id, rxInfo.value);
-    else {
-      const response = await usePatient().addRX(id, rxInfo.value);
-      rxId = response;
+    // Update Existing RX data
+    if (rxId > 0)
+      await usePatient().updateRX(rxInfo.value);
+
+    // Post new RX data
+    if (rxId == 0) {
+      const response = await usePatient().addRX(id.toString(), rxInfo.value);
+      rxId = response?.id;
     }
     // Post Order data
-    if (state.value.orders.length > 0) {
+    if (state.value.orders.length > 0 && id > 0 && rxId > 0) {
       const orderBody = {
         orderDetails: [...state.value.orders],
         patientId: id,
-        prescriptionId: rxId
+        prescriptionId: rxId,
+        total: totalPrice.value.toFixed(2)
       }
-      await usePatient().addOrders(id, orderBody);
+      await usePatient().addOrders(orderBody);
     }
     clearSelected()
   } catch (error) {
@@ -251,7 +262,7 @@ watch(selected, (newSelected) => {
   state.value = {
     ...state.value,
     ...newSelected,
-    birthDate: format(new Date(newSelected.birthDate), 'MM/dd/yyy')
+    birthDate: format(new Date(newSelected.birthDate), 'yyy-MM-dd')
   }
   loading.value = false;
 }, {deep: true});
@@ -329,8 +340,7 @@ onMounted(async () => {
                 <span class="w-24 text-right">Date of Birth:</span>
                 <UInput
                     v-model="state.birthDate"
-                    v-mask="'##/##/####'"
-                    placeholder="MM/DD/YYYY"
+                    type="date"
                     :loading="loading"
                     size="2xs"
                     class="flex-1"
@@ -348,14 +358,10 @@ onMounted(async () => {
         <UDivider label="Prescription Section" size='lg'/>
         <UButton label="Use Last RX" @click="useLastRX" v-if="patientInfo.prescriptions"/>
         <UFormGroup class="w-3/12">
-          <div class="flex items-center space-x-2">
+          <div class="flex items-center space-x-3">
             <span class="w-24 text-right">RX Date:</span>
             <UInput v-model="state.rx.rxDate"
-                    :value="formattedDate"
-                    @input="handleDateInput"
-                    v-mask="'##/##/####'"
-                    placeholder="MM/DD/YYYY"
-                    type="text"
+                    type="date"
                     :loading="loading"
                     size="2xs"
                     class="flex-1"/>
@@ -512,7 +518,7 @@ onMounted(async () => {
           <UFormGroup class="w-12/12">
             <div class="flex items-center space-x-2">
               <span class="text-right">Description:</span>
-              <UTextarea v-model="state.orderTmp.description" :loading="loading" size="2xs" rows=1 autoresize/>
+              <UTextarea v-model="state.orderTmp.description" :loading="loading" size="2xs" :rows="1" autoresize/>
             </div>
           </UFormGroup>
           <UFormGroup class="w-11/12">
@@ -537,48 +543,7 @@ onMounted(async () => {
             Clear
           </UButton>
         </UFormGroup>
-        <UCard>
-          <template #header>
-            <div class="flex justify-between items-center">
-              <h3 class="text-lg font-semibold">Order Summary</h3>
-            </div>
-          </template>
-
-          <div class="space-y-4" v-if="orderDetails.length">
-            <div
-                v-for="(item, index) in orderDetails"
-                :key="index"
-                class="flex items-center justify-between p-3 rounded-lg border-b-4"
-            >
-              <div class="flex-1">
-                <span class="font-medium">{{ item.productType }}</span>
-                <span class="mx-2 text-gray-400">|</span>
-                <span class="text-gray-600">{{ item.frame ? item.frame + ' ' : '' }}{{ item.description }}</span>
-              </div>
-              <div class="flex items-center gap-4">
-                <div class="text-right">
-                  <div class="font-medium">${{ item.price }}</div>
-                  <div class="text-sm text-gray-500">
-                    Tax: ${{ item.tax || item.tax.toFixed(2) }}
-                  </div>
-                </div>
-                <UButton
-                    color="red"
-                    variant="soft"
-                    :icon="'i-heroicons-trash'"
-                />
-              </div>
-            </div>
-          </div>
-
-          <template #footer>
-            <div class="flex justify-between items-center w-full pt-4">
-              <div class="text-lg font-semibold">Total</div>
-              <div class="text-xl font-bold">${{ totalPrice.toFixed(2) }}</div>
-            </div>
-          </template>
-        </UCard>
-
+        <OrderSummary :orderDetails="state.orders" @remove-item="removeOrderItem"/>
         <UButton
             label="Submit"
             @click="onSubmit"/>
@@ -586,7 +551,6 @@ onMounted(async () => {
       </UForm>
     </UContainer>
     <UNotifications/>
-    <DialogWrapper/>
   </div>
 </template>
 

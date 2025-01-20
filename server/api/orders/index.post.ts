@@ -3,7 +3,7 @@ import OrderDetail from "~/server/api/model/orderDetail";
 
 export default eventHandler(async (e) => {
     try {
-        const body = JSON.parse(await readBody(e));
+        const body = await readBody(e);
         console.log(body)
         const orderSummaryBody = {
             patientId: body.patientId,
@@ -12,7 +12,7 @@ export default eventHandler(async (e) => {
         }
         const orderSummary = await OrderSummary.create(orderSummaryBody);
         const orderDetailBody = body.orderDetails.map((e: any) => {
-            return {orderSummaryId: orderSummary.id, ...e}
+            return {orderId: orderSummary.id, ...e}
         });
         await OrderDetail.bulkCreate(orderDetailBody);
         return true

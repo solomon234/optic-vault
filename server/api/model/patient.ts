@@ -4,6 +4,7 @@ import {
 } from '@sequelize/core';
 import sequelize from "~/server/api/service/db";
 import Prescription from "~/server/api/model/prescription";
+import OrderSummary from "~/server/api/model/orderSummary";
 
 interface PatientAttributes {
     id?: number;
@@ -27,6 +28,7 @@ class Patient extends Model<PatientAttributes> implements PatientAttributes {
     public phoneNumber!: string;
     public address?: string;
     public prescriptions?: Prescription[];
+    public orders?: OrderSummary[];
 
     get fullName(): NonAttribute<string> {
         return this.firstName + " " + this.lastName;
@@ -96,5 +98,6 @@ Patient.init({
 });
 
 Patient.hasMany(Prescription)
+Patient.hasMany(OrderSummary)
 
 export default Patient;
