@@ -23,7 +23,7 @@ export const usePatient = () => {
         addPatient: async (patient: any) => {
             return await $fetch(`${apiUrl}api/patients`, {
                 method: 'POST',
-                body: JSON.stringify(patient),
+                body: patient,
             }) as number;
         },
         //Patient RX

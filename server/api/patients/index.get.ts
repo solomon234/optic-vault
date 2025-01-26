@@ -8,7 +8,7 @@ export default eventHandler(async (e) => {
     try {
         let {q} = getQuery(e);
         q = q ? q : '';
-        const patients = await Patient.findAll({
+        return await Patient.findAll({
             where: {
                 [Op.or]: [
                     {
@@ -23,17 +23,17 @@ export default eventHandler(async (e) => {
                     }
                 ]
             },
-            include: [Prescription, OrderSummary]
+            include: [
+                Prescription,
+                {
+                    model: OrderSummary,
+                    include: [OrderDetail]
+                }
+            ],
+            order: [
+                [Prescription, 'rxDate', 'DESC']
+            ]
         })
-        patients.forEach(patient => {
-            patient.prescriptions?.sort(function (a, b) {
-                const dateA = new Date(a.rxDate), dateB = new Date(b.rxDate)
-                return dateB - dateA
-            });
-        })
-
-        return patients;
-
     } catch (error) {
         console.error(error);
         return error

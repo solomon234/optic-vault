@@ -28,7 +28,7 @@ class Patient extends Model<PatientAttributes> implements PatientAttributes {
     public phoneNumber!: string;
     public address?: string;
     public prescriptions?: Prescription[];
-    public orders?: OrderSummary[];
+    public orderSummaries?: OrderSummary[];
 
     get fullName(): NonAttribute<string> {
         return this.firstName + " " + this.lastName;
@@ -75,7 +75,7 @@ Patient.init({
             // @ts-expect-error
             return `${this.firstName} ${this.lastName}`;
         },
-        set(value) {
+        set() {
             throw new Error('Do not try to set the `fullName` value!');
         },
 
@@ -86,7 +86,7 @@ Patient.init({
             // @ts-expect-error
             return `${this.firstName} ${this.lastName} (${this.address})`;
         },
-        set(value) {
+        set() {
             throw new Error('Do not try to set the `fullNameAndAddress` value!');
         },
 

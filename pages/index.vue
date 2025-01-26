@@ -190,11 +190,7 @@ function validateSubmission() {
     return true
   }
 
-  if (state.value.orders.length === 0 && confirm('Are you sure you want to continue without order details?')) {
-    return true
-  } else {
-    return false;
-  }
+  return state.value.orders.length === 0 && confirm('Are you sure you want to continue without order details?');
 }
 
 async function onSubmit() {
@@ -204,16 +200,18 @@ async function onSubmit() {
 
   let id = state.value.id;
   let rxId = rxInfo.value.id;
-  const originalRx = useOmit(selected.value.prescriptions[0], 'comments');
-  const currentRx = useOmit(rxInfo.value, 'comments');
-  originalRx.rxDate = format(new Date(originalRx.rxDate), 'yyy-MM-dd');
-  // Check if RX
-  if (!isEqual(originalRx, currentRx)) {
-    useToast().add({title: 'RX has changed, updating RX'})
-    rxId = 0;
-    state.value.rx.id = 0;
-    delete state.value.rx.createdAt;
-    delete state.value.rx.updatedAt;
+  if (selected.value) {
+    const originalRx = useOmit(selected.value.prescriptions[0], 'comments');
+    const currentRx = useOmit(rxInfo.value, 'comments');
+    originalRx.rxDate = format(new Date(originalRx.rxDate), 'yyy-MM-dd');
+    // Check if RX
+    if (!isEqual(originalRx, currentRx)) {
+      useToast().add({title: 'RX has changed, updating RX'})
+      rxId = 0;
+      state.value.rx.id = 0;
+      delete state.value.rx.createdAt;
+      delete state.value.rx.updatedAt;
+    }
   }
 
   try {
@@ -223,9 +221,7 @@ async function onSubmit() {
     }
     // Post new data
     if (id == 0) {
-      const response = await usePatient().addPatient(patientInfo.value);
-      id = response;
-      console.log('new ID', id);
+      id = await usePatient().addPatient(patientInfo.value);
     }
     // Update Existing RX data
     if (rxId > 0)
@@ -555,7 +551,4 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.baseline {
-  align-items: baseline;
-}
 </style>

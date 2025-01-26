@@ -1,6 +1,6 @@
 import {
     DataTypes, ForeignKey,
-    Model,
+    Model, NonAttribute,
 } from '@sequelize/core';
 import sequelize from "~/server/api/service/db";
 import Patient from "~/server/api/model/patient";
@@ -12,6 +12,7 @@ export interface OrderSummaryAttribute {
     patientId: number;
     prescriptionId: number;
     total: number;
+    orderDate: string;
 }
 
 class OrderSummary extends Model<OrderSummaryAttribute> implements OrderSummaryAttribute {
@@ -20,6 +21,10 @@ class OrderSummary extends Model<OrderSummaryAttribute> implements OrderSummaryA
     public prescriptionId!: ForeignKey<Prescription['id']>;
     public total!: number;
     public orderDetails?: OrderDetail[];
+
+    get orderDate(): NonAttribute<string> {
+        return new Date(this.createdAt).format('yyyy-MM-dd');
+    }
 }
 
 OrderSummary.init(
@@ -41,6 +46,13 @@ OrderSummary.init(
             type: DataTypes.DOUBLE,
             allowNull: false,
         },
+        orderDate: {
+            type: DataTypes.VIRTUAL,
+            get() {
+                // @ts-expect-error
+                return new Date(this.createdAt).format('yyyy-MM-dd');
+            },
+        }
     },
     {
         sequelize,

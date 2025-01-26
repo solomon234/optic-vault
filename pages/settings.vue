@@ -23,7 +23,7 @@ onMounted(async () => {
     <UDivider class="settings-divider"/>
     <div class="settings-list">
       <div v-for="(setting, index) in settings" :key="setting.type" class="setting-item">
-        <label class="setting-label">{{ setting.type }}</label>
+        <label class="flex-1">{{ setting.type }}</label>
         <div class="setting-input-wrapper">
           <UInput v-if="isNumeric(setting.value)" v-model.lazy="setting.value" type="number"
                   @blur="updateSetting(index)" class="setting-input"/>
@@ -63,15 +63,9 @@ onMounted(async () => {
   align-items: center;
   justify-content: space-between;
   padding: 1rem;
-  background-color: #f8f8f8;
   border-radius: 8px;
 }
 
-.setting-label {
-  font-size: 1.1rem;
-  font-weight: bold;
-  flex: 1;
-}
 
 .setting-input-wrapper {
   flex: 2;
@@ -81,8 +75,4 @@ onMounted(async () => {
   width: 100%;
 }
 
-.save-button {
-  margin-top: 2rem;
-  align-self: flex-end;
-}
 </style>

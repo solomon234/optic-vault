@@ -5,10 +5,12 @@ import type {UnwrapRef} from "vue";
 import {format} from "date-fns";
 import {usePatient} from "~/composables/usePatient";
 
+const {getPatients, deleteRX, deletePatient, getOrderDetails} = usePatient();
+
 const isOpenRX = ref(false)
 const isOpenOrders = ref(false)
 
-let selected = ref({});
+let selected = ref();
 
 const columns = [
   {
@@ -25,15 +27,16 @@ const columns = [
     label: "Phone Number",
   }, {
     key: "birthDate",
-    label: "Date of Birth"
+    label: "Date of Birth",
   },
   {key: "actions"}
 ]
+
 const items = (row: any) => [
   [{
     label: 'View RX History',
     icon: 'i-heroicons-list-bullet-20-solid',
-    click: () => {
+    click: async () => {
       selected = row;
       isOpenRX.value = true
     }
@@ -41,35 +44,47 @@ const items = (row: any) => [
     label: 'View Order History',
     icon: 'i-heroicons-list-bullet-20-solid',
     click: async () => {
-      selected = row.orderSummaries;
+      selected = row
       isOpenOrders.value = true;
     }
   }, {
     label: 'Delete',
     icon: 'i-heroicons-trash-20-solid',
     click: async () => {
-      await usePatient().deletePatient(row.id)
-      getPatients()
+      await deletePatient(row.id)
+      getPatientList()
     }
   }]
 ]
+
+const orderColumns = [{
+  key: "createdAt",
+  label: "Order Date",
+},
+  {
+    key: "total",
+    label: "Total",
+  },
+  {
+    key: "delete",
+    label: "Delete",
+    icon: 'i-heroicons-trash-20-solid',
+  }];
 
 const toast = useToast()
 let patients: Ref<UnwrapRef<Patient[]>> = ref([]);
 
 const q = ref('');
 
-const getPatients = async () => {
+const getPatientList = async () => {
   try {
-    const response = await usePatient().getPatients();
-    const body: Patient[] | any = response;
-    patients.value = [...body];
+    patients.value = await getPatients();
   } catch (error) {
     toast.add({title: 'Errors found'})
     console.error('Error fetching patients:', error);
   }
 };
-const deleteRX = async (rx: object, index: int) => {
+const deleteRXRecord = async (rx: object, index: int) => {
   await usePatient().deleteRX(rx.id.toString())
   selected.value.prescriptions.splice(index, 1)
 }
@@ -90,7 +105,7 @@ const filteredRows = computed(() => {
   })
 })
 
-onMounted(getPatients)
+onMounted(getPatientList)
 </script>
 
 <template>
@@ -99,7 +114,8 @@ onMounted(getPatients)
     <div class="flex px-3 py-3.5 border-b border-gray-200 dark:border-gray-700">
       <UInput v-model="q" placeholder="Filter patient..."/>
     </div>
-    <UTable :columns="columns" :rows="filteredRows">
+    <UTable :columns="columns" :rows="filteredRows"
+            :empty-state="{ icon: 'i-heroicons-circle-stack-20-solid', label: 'No Patients.' }">
       <template #actions-data="{ row }">
         <UDropdown :items="items(row)">
           <UButton color="gray" variant="ghost" icon="i-heroicons-ellipsis-horizontal-20-solid"/>
@@ -126,7 +142,7 @@ onMounted(getPatients)
         <template #header>
           <div class="flex items-center justify-between">
             <span>Prescription - {{ format(new Date(prescription.rxDate), 'MM/dd/yyy') }}</span>
-            <UButton class="bg-red-600" @click="deleteRX(prescription, index)">Delete</UButton>
+            <UButton class="bg-red-600" @click="deleteRXRecord(prescription, index)">Delete</UButton>
           </div>
         </template>
         <template #default>
@@ -191,11 +207,17 @@ onMounted(getPatients)
                      @click="isOpenOrders = false"/>
           </div>
         </template>
+        <template #default>
+          <UTable :columns="orderColumns"
+                  :rows="selected.orderSummaries"
+                  :empty-state="{ icon: 'i-heroicons-circle-stack-20-solid', label: 'No Orders...' }">
+            <template #expand="{ row }">
+              <OrderSummary v-if="row.orderDetails" :orderDetails="row.orderDetails"/>
+            </template>
+          </UTable>
+        </template>
       </UCard>
-      <OrderSummary v-for="(order, index) in selected" :orderDetails="order"/>
-
     </UModal>
-
   </div>
 </template>
 <style scoped>
