@@ -43,7 +43,7 @@ function removeItem(index: number) {
           <div class="text-right">
             <div class="font-medium">${{ item.price }}</div>
             <div class="text-sm text-gray-500">
-              Tax: ${{ item.tax || item.tax.toFixed(2) }}
+              Tax: ${{ (item.price * (item.tax / 100)).toFixed(2) }} ({{ item.tax.toFixed(2) }}%)
             </div>
           </div>
           <UButton
