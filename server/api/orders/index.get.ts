@@ -4,9 +4,7 @@ import OrderSummary from "~/server/api/model/orderSummary";
 
 export default eventHandler(async (e) => {
     try {
-        const order = await OrderSummary.findByPk(e?.context?.params?.id, {
-            // include: [OrderDetail]
-        });
+        const order = await OrderSummary.findByPk(e?.context?.params?.id);
         return order ?? {error: 'not found'};
     } catch (error) {
         return error

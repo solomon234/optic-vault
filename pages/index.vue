@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import {format} from "date-fns";
-import {object, string, type InferType} from 'yup'
+import {object, string, date, type InferType} from 'yup'
 import {useSetting} from "~/composables/useSetting";
 import {usePatient} from "~/composables/usePatient";
 import {useUtils} from "~/composables/useUtils";
-import {useEq} from "#imports";
+
 
 const {generateAddValues} = useUtils();
 definePageMeta({
@@ -21,7 +21,11 @@ const schema = object({
   lastName: string().defined(),
   email: string().email('Invalid email').defined(),
   phoneNumber: string().matches(/^\(\d{3}\) \d{3}-\d{4}$/, 'Invalid Phone Number Ex. (123) 123-1234').defined(),
-  birthDate: string().defined(),
+  birthDate: date(),
+  rx: object({
+    rxDate: date().defined(),
+  })
+
 })
 const addValues = computed({
   get() {
@@ -69,13 +73,7 @@ const totalPrice = computed({
   set() {
   }
 })
-const orderDetails = computed({
-  get() {
-    return state.value.orders;
-  },
-  set() {
-  }
-})
+
 const blankPatient: Patient = {
   id: 0,
   hasPrism: false,
@@ -148,6 +146,7 @@ function clearSelected() {
   console.log('clear');
   selected.value = undefined;
   blankPatient.orders = [] as OrderDetail[];
+  blankPatient.rx = [] as RX[];
   state.value = {...blankPatient, orderTmp: {} as OrderDetail, tax: 0.0 as number};
 }
 
@@ -200,7 +199,7 @@ async function onSubmit() {
 
   let id = state.value.id;
   let rxId = rxInfo.value.id;
-  if (selected.value) {
+  if (rxId) {
     const originalRx = useOmit(selected.value.prescriptions[0], 'comments');
     const currentRx = useOmit(rxInfo.value, 'comments');
     originalRx.rxDate = format(new Date(originalRx.rxDate), 'yyy-MM-dd');
@@ -228,7 +227,7 @@ async function onSubmit() {
       await usePatient().updateRX(rxInfo.value);
 
     // Post new RX data
-    if (rxId == 0) {
+    if (rxId == undefined || rxId == 0) {
       const response = await usePatient().addRX(id.toString(), rxInfo.value);
       rxId = response?.id;
     }

@@ -4,7 +4,6 @@ import OrderDetail from "~/server/api/model/orderDetail";
 export default eventHandler(async (e) => {
     try {
         const body = await readBody(e);
-        console.log(body)
         const orderSummaryBody = {
             patientId: body.patientId,
             prescriptionId: body.prescriptionId,

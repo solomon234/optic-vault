@@ -12,7 +12,7 @@ export const usePatient = () => {
         updatePatient: async (type: string, value: Patient) => {
             return await $fetch(`${apiUrl}api/patients/${type}`, {
                 method: 'PUT',
-                body: JSON.stringify(value),
+                body: value,
             });
         },
         deletePatient: async (id: string) => {
@@ -35,20 +35,20 @@ export const usePatient = () => {
         updateRX: async (rx: any) => {
             return await $fetch(`${apiUrl}api/prescriptions`, {
                 method: 'PUT',
-                body: JSON.stringify(rx),
+                body: rx,
             })
         },
-        addRX: async (rx: any) => {
-            return await $fetch(`${apiUrl}api/prescriptions`, {
+        addRX: async (id: int, rx: any) => {
+            return await $fetch(`${apiUrl}api/prescriptions/${id}`, {
                 method: 'POST',
-                body: JSON.stringify(rx),
+                body: rx,
             });
         },
         // Orders
         addOrders: async (orders: any) => {
             return await $fetch(`${apiUrl}api/orders`, {
                 method: 'POST',
-                body: JSON.stringify(orders),
+                body: orders,
             });
         },
         getOrderDetails: async (id: string) => {
