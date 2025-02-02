@@ -51,8 +51,10 @@ const items = (row: any) => [
     label: 'Delete',
     icon: 'i-heroicons-trash-20-solid',
     click: async () => {
-      await deletePatient(row.id)
-      getPatientList()
+      if (confirm('Are you sure you want to delete this patient?')) {
+        await deletePatient(row.id)
+        getPatientList()
+      }
     }
   }]
 ]
@@ -85,12 +87,16 @@ const getPatientList = async () => {
   }
 };
 const deleteRXRecord = async (rx: object, index: int) => {
-  await usePatient().deleteRX(rx.id.toString())
-  selected.value.prescriptions.splice(index, 1)
+  if (confirm('Are you sure you want to delete this prescription?')) {
+    await deleteRX(rx.id.toString())
+    selected.value.prescriptions.splice(index, 1)
+  }
 }
 
 function removeOrderItem(index: number) {
-  selected.value.orders.splice(index, 1)
+  if (confirm('Are you sure you want to delete this order?')) {
+    selected.value.orderSummaries.splice(index, 1)
+  }
 }
 
 const filteredRows = computed(() => {
