@@ -1,0 +1,13 @@
+version: '3.8'
+services:
+  optic-vault:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./database:/app/database
+      - ./backups:/app/backups
+      - ./scripts:/app/scripts
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped

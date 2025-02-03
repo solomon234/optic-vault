@@ -7,7 +7,7 @@ console.info('Dir', appDir)
 
 const sequelize = new Sequelize({
     dialect: SqliteDialect,
-    storage: appDir + '/optic-vault/optic-vault.db',
+    storage: appDir + '/optic-vault/database/optic-vault.db',
 });
 
 export default sequelize;
