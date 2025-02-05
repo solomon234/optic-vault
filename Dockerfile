@@ -4,11 +4,10 @@ FROM node:20-alpine
 RUN apk add --no-cache \
     sqlite \
     python3 \
-    cron \
     tzdata
 
 # Set working directory
-WORKDIR /app
+WORKDIR /optic-vault
 
 # Copy package files
 COPY package*.json ./
@@ -20,11 +19,11 @@ RUN npm install
 COPY . .
 
 # Create directory for SQLite database
-RUN mkdir -p /app/optic-vault.db
+RUN mkdir -p /optic-vault/database/
 
 # Add backup script
-COPY backup-db.sh /app/scripts/backup-db.sh
-RUN chmod +x /app/backup-db.sh
+COPY ./scripts/backup-db.sh /optic-vault/scripts/backup-db.sh
+RUN chmod +x /optic-vault/scripts/backup-db.sh
 
 # Add crontab file
 COPY crontab /etc/crontabs/root

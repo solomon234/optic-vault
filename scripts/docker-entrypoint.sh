@@ -3,14 +3,16 @@
 crond
 
 # Initialize database if it doesn't exist
-if [ ! -f /app/database/optic-vault.db ]; then
+if [ ! -f /optic-vault/database/optic-vault.db ]; then
 echo "Initializing database..."
-sqlite3 /app/database/optic-vault.db < /app/init.sql
+sqlite3 /optic-vault/database/optic-vault.db < /optic-vault/scripts/init.sql
 fi
 
+rm -rf /optic-vault/.output/server/node_modules
+
 # Start the Nuxt application
-exec node .output/server/index.mjs
+npm run start
 
 # crontab
 # Run backup daily at 2 AM
-0 2 * * * /app/backup-db.sh
+0 2 * * * /optic-vault/scripts/backup-db.sh
