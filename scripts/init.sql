@@ -76,3 +76,5 @@ CREATE INDEX idx_prescription_patient ON prescription(patientId);
 CREATE INDEX idx_orders_patient ON order_summary (patientId);
 CREATE INDEX idx_orders_prescription ON order_summary (prescriptionId);
 CREATE INDEX idx_order_details_order ON order_detail (orderId);
+
+insert into setting (type, value) values ('tax', '8.875');
